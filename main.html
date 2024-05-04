@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropdown Data Display</title>
+</head>
+<body>
+    <label for="number-dropdown">Select a number:</label>
+    <select id="number-dropdown" onchange="showData()">
+        <option value="">Select</option>
+        <!-- Populate dropdown with numbers from 1 to 282 -->
+        <!-- You can generate these options dynamically using JavaScript if needed -->
+        <option value="1">1</option>
+        <option value="2">2</option>
+	<option value="3">3</option>
+        <option value="282">282</option>
+    </select>
+	<input type="text" id="search-input" oninput="search()" placeholder="Search by EPIC ID or Name">
+ 	<button >Submit</button>
+    	<div id="data-table"></div>
+
+
+<script>
+const boothData = {};
+var changedDropdowns = [];
+        function dropdownChanged(index, dropdown) {
+	console.log(index)
+            // Add the index to changedDropdowns array if it's not already present
+            //if (!changedDropdowns.includes(index)) {
+                //changedDropdowns.push(index);
+           // }
+	 var selectedBoothNumber = document.getElementById("number-dropdown").value;
+	var selectedValue = document.getElementsByClassName("voted-for-dropdown")[index].value;
+	console.log(selectedValue,selectedBoothNumber,index)
+	 if (boothData[selectedBoothNumber] && boothData[selectedBoothNumber][index]) {
+		boothData[selectedBoothNumber][index].votedFor = selectedValue;
+	}
+	console.log(boothData);
+        }
+ function updateJson() {
+            var selectedVotedFor = document.querySelector("#data-table select.voted-for-dropdown").value;
+            var selectedBoothNumber = document.getElementById("number-dropdown").value;
+		
+ if (selectedBoothNumber !== "" && selectedVotedFor !== "") {
+                // Get the index of the selected person in the table
+                var selectedIndex = document.querySelector("#data-table select.voted-for-dropdown").parentNode.parentNode.rowIndex - 1;
+console.log("selectedVotedFor", selectedVotedFor, selectedBoothNumber,selectedIndex);
+                // Update the JSON data for the selected person
+                //const boothData = JSON.parse(`{${boothDataJson}}`);
+                if (boothData[selectedBoothNumber] && boothData[selectedBoothNumber][selectedIndex]) {
+                    boothData[selectedBoothNumber][selectedIndex].votedFor = selectedVotedFor;
+
+                    // Convert the updated boothData object back to JSON format
+                    //const updatedBoothDataJson = JSON.stringify(boothData);
+
+                    // Display a message or perform further actions if needed
+                    console.log("Updated JSON data:", boothData);
+                } else {
+                    console.error("Selected booth number not found in JSON data.");
+                }
+            } else {
+                console.error("Please select both booth number and Voted For value.");
+            }
+        }
+function search() {
+            var input = document.getElementById("search-input").value.toLowerCase();
+            var tableRows = document.querySelectorAll("#data-table table tbody tr");
+
+            tableRows.forEach(row => {
+                var name = row.cells[1].textContent.toLowerCase(); // Name column
+                var epicId = row.cells[2].textContent.toLowerCase(); // EPIC ID column
+
+                // Show row if input matches name or EPIC ID, otherwise hide it
+                if (name.includes(input) || epicId.includes(input)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+
+        function loadJSON(callback) {   
+        // var xobj = new XMLHttpRequest();
+        // xobj.overrideMimeType("application/json");
+        // xobj.open('GET', 'http://localhost:8000/data.json', true); // Replace 'data.json' with your JSON file path
+        // xobj.onreadystatechange = function () {
+        //     if (xobj.readyState == 4 && xobj.status == 200) {
+        //         callback(xobj.responseText);
+        //     }
+        // };
+        // xobj.send(null);  
+        fetch('./data,.json').then((res)=>{
+            if(!res.ok){
+            
+            }
+            return res.json();
+        }).then((data)=>{
+            console.log(data);
+        }).catch((error)=>{
+            console.log(error);
+        })
+    }
+    function showData() {
+        var selectedNumber = document.getElementById("number-dropdown").value;
+        if (selectedNumber !== "") {
+            
+//const data = 
+loadJSON(function(response) {
+            var data = JSON.parse(response);
+            // Do something with the JSON data
+            console.log(jsonData);
+        });
+data.forEach(item => {
+    const boothNumber = item.boothNumber;
+    if (!boothData[boothNumber]) {
+        boothData[boothNumber] = [];
+    }
+    boothData[boothNumber].push({
+        "firstName": item.FIRSTNAME,
+        "lastName": item.LASTNAME,
+        "epicSerialNumber": item.epicSerialNumber,
+        "epicId": item.epicId
+    });
+});
+
+
+//const boothDataJson = JSON.stringify(boothData);
+//console.log(boothDataJson);
+                   
+
+            //const boothsData = JSON.parse(`{${boothDataJson}}`);
+
+            // Check if the selected booth number exists in boothData
+            if (boothData[selectedNumber]) {
+                var table = `
+                    <table border="1">
+                        <thead>
+                            <tr>
+				<th>sl.no</th>
+                                <th>Name</th>
+                                <th>EPIC ID</th>
+                                <th>Voted For</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+ var serialNumber = 1;
+                // Loop through the data for the selected booth number
+                boothData[selectedNumber].forEach((person, index) => {
+                    var votedForDropdown = `
+                        <select class="voted-for-dropdown" onchange="dropdownChanged(${index},this)">
+                            <option value="sss">SSS</option>
+                            <option value="yyy">YYY</option>
+                            <option value="ooo">OOO</option>
+                        </select>
+                    `;
+                    table += `
+                        <tr>
+			<td>${index}</td>
+                            <td>${person.firstName} ${person.lastName}</td>
+                            <td>${person.epicId}</td>
+                            <td>${votedForDropdown}</td>
+                        </tr>
+                    `;
+serialNumber++;
+                });
+
+                table += `
+                        </tbody>
+                    </table>
+                `;
+
+                document.getElementById("data-table").innerHTML = table;
+            } else {
+                // If the selected booth number does not exist in boothData
+                document.getElementById("data-table").innerHTML = "<p>No data available for this booth number.</p>";
+            }
+        } else {
+            document.getElementById("data-table").innerHTML = ""; // Clear table if no number selected
+        }
+    }
+</script>
+</body>
+</html>
+	
+
+
+ 
